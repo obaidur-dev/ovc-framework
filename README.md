@@ -1,150 +1,201 @@
-# OVC Framework
+# OVC Framework v1.0 (archived)
 
-**Obaidur's Verified Coding Framework** — two Claude skills that turn a raw
-idea into a build-ready spec set, in two deliberately separate passes:
-discovery, then generation.
+**Obaidur's Verified Coding Framework** — two Agent Skills that turn a raw idea
+into a build-ready spec set, in two deliberately separate passes.
+
+> **This version is archived. Use [v2.1](../v2.1/README.md) instead.**
+> v2.1 is a strict superset: the same two skills, plus a third skill
+> (`ovc-explain`), a machine checker that fails the build on untraced
+> requirements, beginner/intermediate/expert personalisation, and every design
+> choice backed by a cited study. v1.0 is kept here for people who already have
+> v1.0 briefs and need to upgrade them.
 
 ```
-raw idea ──▶ ovc-discover ──▶ project-brief.md ──▶ (new chat) ──▶ ovc-specify ──▶ full spec set ──▶ coding agent
-             (conversation)      (single file)                     (generation)      (PRD, architecture,
-                                                                                       security, build plan…)
+raw idea ──▶ ovc-discover ──▶ <project>-brief.md ──▶ (fresh session) ──▶ ovc-specify ──▶ spec set ──▶ coding agent
+              (conversation)     (single file)                    (generation)        PRD, architecture,
+                                                                                       security, build plan
 ```
 
 ## Why two skills instead of one
 
-A long discovery conversation and a long document-generation pass have
-different failure modes, and cramming both into one chat lets the first
-one's noise degrade the second one's quality. So the framework splits them:
+A long discovery conversation and a long document-generation pass fail
+differently. Cramming both into one chat lets the first one's noise degrade the
+second one's quality. So the framework splits them:
 
-- **`ovc-discover`** — has a short, adaptive conversation with you about a
-  raw idea and distills it into one clean `<project>-brief.md` file. Ends
-  with a hard gate: it shows you the draft and won't finalize anything
-  until you confirm it's accurate.
-- **`ovc-specify`** — run in a **fresh chat**, with no memory of the
-  discovery conversation. It treats the brief as the only source of truth,
-  and generates the full spec set a coding agent needs to actually build
-  the thing: `PRD.md`, `ARCHITECTURE.md`, `SECURITY.md` (a full STRIDE
-  threat model, generated for every project regardless of size),
-  `BUILD_PLAN.md`, plus `DATA_MODEL.md` and `API_SPEC.md` when the project
-  actually needs them. It never guesses at something the brief doesn't
-  answer — it flags it as an open question instead and asks you directly.
+- **`ovc-discover`** runs a short, adaptive conversation about a raw idea and
+  distils it into one clean `<project>-brief.md`. It ends with a hard gate: it
+  shows you the draft and will not finalise anything until you confirm it is
+  accurate.
+- **`ovc-specify`** runs in a **fresh chat**, with no memory of the discovery
+  conversation. It treats the brief as the only source of truth and generates
+  the spec set a coding agent needs to actually build the thing: `PRD.md`,
+  `ARCHITECTURE.md`, `SECURITY.md` (a full STRIDE threat model, generated for
+  every project regardless of size), `BUILD_PLAN.md`, plus `DATA_MODEL.md` and
+  `API_SPEC.md` when the project genuinely needs them. It never guesses at
+  something the brief does not answer — it flags it as an open question and asks
+  you directly.
 
-Both skills also always generate `AGENTS.md` (the open, cross-tool
-standard for giving a coding agent project context) and a short `CLAUDE.md`
-stub pointing to it — because Claude Code currently reads `CLAUDE.md`
-automatically but doesn't yet auto-read `AGENTS.md` the way some other
-tools do, so the stub keeps that handoff from silently falling through.
+Both skills always generate `AGENTS.md` (the open, cross-tool standard for giving
+a coding agent project context) and a short `CLAUDE.md` stub pointing to it.
 
-## What's in this repo
+## What you get
 
-```
-ovc-framework/
-├── README.md
-├── ovc-discover/
-│   ├── SKILL.md                    # discovery conversation logic
-│   └── references/
-│       └── ovc-templates.md        # canonical doc templates (shared)
-├── ovc-specify/
-│   ├── SKILL.md                    # spec-generation logic
-│   └── references/
-│       └── ovc-templates.md        # same file, kept identical
-├── ovc-discover.skill               # packaged, ready to upload
-└── ovc-specify.skill                # packaged, ready to upload
-```
+Always: `PRD.md`, `ARCHITECTURE.md`, `SECURITY.md`, `BUILD_PLAN.md`,
+`AGENTS.md`, `CLAUDE.md`.
 
-The two `references/ovc-templates.md` files are intentionally identical —
-they're the single canonical source for every document shape in the
-framework (the brief, the PRD, the STRIDE table, etc.), duplicated into
-both skills so a brief `ovc-discover` produces always matches what
-`ovc-specify` expects. If you ever edit one, copy the change into the
-other so they don't drift apart.
+Conditionally, with a one-line reason stated for every skip:
 
-## Is this Claude Code-only, Claude.ai-only, or does it work in other AI tools?
+| File | Only when |
+|---|---|
+| `DATA_MODEL.md` | the project actually persists data |
+| `API_SPEC.md` | the project exposes an API or has a service boundary |
 
-Both skills are built in the **Agent Skills format** — a `SKILL.md` file
-with YAML frontmatter, no Claude-specific tool calls hardcoded into the
-instructions. That format is Anthropic's, but it's increasingly being
-treated as a de facto open standard (see
-[agentskills.io](https://agentskills.io)) that other coding agents are
-adopting too.
+Other documents you can ask for but are not generated by default: EARS-format
+requirements, Architecture Decision Records.
 
-- **Claude.ai (web, desktop, mobile chat) and Claude Code** — both work
-  natively, no changes needed. This is what the two skills were written
-  and actually tested against, and the rest of this README assumes one of
-  these two.
-- **Other SKILL.md-compatible agents** (OpenAI Codex CLI, Gemini CLI,
-  Cursor, and a growing list of others) — likely to work, since the
-  `SKILL.md` files are plain instructions Claude follows, not Claude-only
-  code. But each tool has its own way of *finding* skills — Codex CLI
-  looks under `.agents/skills`, Gemini CLI wraps them as "extensions" via
-  a `gemini-extension.json`, Cursor uses a plugin manifest — so you may
-  need to add that tool's small manifest file alongside `SKILL.md`, or
-  place the unzipped folder wherever that tool expects skills to live.
-  We've only built and tested these against Claude, so treat other agents
-  as "should work in principle," not verified.
-- **Non-agentic tools** (plain ChatGPT web chat, a raw API call with no
-  skills support) — won't auto-load these, but nothing stops you from just
-  pasting a `SKILL.md`'s instructions into a prompt by hand; you'd lose
-  the automatic triggering and the shared-template consistency, but the
-  underlying instructions and templates in `references/ovc-templates.md`
-  are just plain markdown and work as a manual guide too.
+## What v1.0 does not do
 
-## Installing
+Being straight with you, because you should know what you are installing:
 
-Each `.skill` file is a self-contained zip archive — pick whichever of
-these matches how you use Claude.
+- **No automated checks.** v1.0 has no `check_specs.py`. Nothing verifies that
+  requirement IDs are traced, that a threat row has a status, or that the
+  documents agree with each other. A reviewer has to do that by eye. v2.0 added
+  a checker; v2.1 added a second one.
+- **No research behind the design.** The "always generate SECURITY.md", "always
+  write a Verification section", and "generate both AGENTS.md and CLAUDE.md"
+  decisions are good practice, but v1.0 does not cite evidence for them. v2.1
+  does.
+- **No size scaling.** A 200-line script and a capstone get the same document
+  set. v2.0 added Lite / Standard / Full tracks.
+- **No personalisation.** One voice for everyone. v2.1 adds beginner /
+  intermediate / expert levels.
+- **No handover guide.** v1.0 stops at the spec set. v2.1 adds `ovc-explain`,
+  which writes a guide to what was actually built.
 
-### Claude.ai (web, desktop, or mobile)
+If you are starting a new project, use v2.1. Use v1.0 only to upgrade an
+existing v1.0 brief.
 
-Skills work on Free, Pro, Max, Team, and Enterprise plans and just need
-code execution enabled first.
+## Requirements
 
-1. **Settings → Capabilities** — turn on *Code execution and file
-   creation* if it isn't already on. (Team/Enterprise: an org owner
-   enables this in *Organization settings → Skills* first.)
-2. **Customize → Skills → Upload a skill.**
-3. Upload `ovc-discover.skill`, then repeat for `ovc-specify.skill`.
-4. Make sure both are toggled on.
+- An AI coding tool that supports the [Agent Skills](https://agentskills.io)
+  format (a folder containing `SKILL.md` with YAML frontmatter).
+- No shell, no Python, no dependencies. v1.0 is pure instructions.
 
-### Claude Code
+## Install
 
-Custom skills there are just files on disk — no upload step:
+Each `.skill` file is a zip archive containing one skill folder. Unzip it into
+your tool's skills directory — **not** into a folder you create yourself, or the
+skill ends up nested one level too deep and your tool will not find it.
+
+**Claude Code** — copy the folders:
 
 ```bash
 mkdir -p ~/.claude/skills
-unzip ovc-discover.skill -d ~/.claude/skills/ovc-discover
-unzip ovc-specify.skill -d ~/.claude/skills/ovc-specify
+unzip ovc-discover.skill -d ~/.claude/skills/     # -> ~/.claude/skills/ovc-discover/SKILL.md
+unzip ovc-specify.skill  -d ~/.claude/skills/     # -> ~/.claude/skills/ovc-specify/SKILL.md
 ```
 
-Use `.claude/skills/` (project-local, no `~`) instead if you want either
-skill scoped to one repo rather than available everywhere.
+Use `.claude/skills/` (project-local, no `~`) instead of `~/.claude/skills/` if
+you want the skills scoped to one repo rather than available everywhere.
 
-## Using it
+**Claude.ai (web, desktop, or mobile)** — enable code execution first, then
+*Settings → Capabilities → Code execution and file creation*, then
+*Customize → Skills → Upload a skill* for each `.skill` file.
 
-1. Open a chat and describe your idea — as little as one sentence, or as
-   much as a full notes dump — and ask Claude to use `ovc-discover` (or
-   just mention "OVC" / "project brief"; the description is written to
-   trigger on its own for this kind of request).
-2. Answer whatever it asks. It adapts to how much you've already given it
-   — a detailed dump gets fewer questions than a one-liner.
-3. Review the brief it drafts. Ask for changes if anything's off — it
-   won't finalize the file until you confirm it.
-4. Start a **new chat**, hand it the `<project>-brief.md` file, and ask
-   Claude to use `ovc-specify`.
-5. It generates the spec set, flags anything the brief left unclear as an
-   open question, and asks you those directly before wrapping up.
-6. Point your coding agent at the project root (`AGENTS.md` / `CLAUDE.md`)
-   and start building. Treat the docs as living — update them as real
-   decisions change mid-build instead of letting them go stale.
+**Other tools** — the skills are plain instructions with no Claude-specific tool
+calls, but every tool has its own way of *finding* skills. Codex CLI reads
+`.agents/skills/`, Gemini CLI reads `.gemini/skills/`, Cursor reads
+`.agents/skills/` or `.claude/skills/`. Unzip into whichever directory your tool
+uses, or just paste a `SKILL.md` into the session. **These paths were not
+verified against each tool's documentation** — check your tool's own docs.
 
-## Customizing
+## Use
 
-Both skills' behavior lives entirely in their `SKILL.md` files, and every
-document shape lives in `references/ovc-templates.md`. To add a section to
-every future PRD, for instance, edit the PRD template in
-`ovc-templates.md` in *both* skill folders and repackage.
+1. Open a chat and describe your idea — one sentence or a full notes dump — and
+   ask it to use `ovc-discover`. (The skill's description is written to trigger
+   on its own for this kind of request.)
+2. Answer what it asks. It adapts: a detailed dump gets fewer questions than a
+   one-liner.
+3. Review the brief it drafts and ask for changes. It will not write the file
+   until you confirm.
+4. Start a **new chat**, hand it the `<project>-brief.md` file, and ask for
+   `ovc-specify`.
+5. It generates the spec set, flags anything the brief left unclear as an open
+   question, and asks you those directly before wrapping up.
+6. Point your coding agent at the project root, where `AGENTS.md` and
+   `CLAUDE.md` live.
 
-## License
+Treat the documents as living. Update them as real decisions change mid-build
+rather than letting them go stale — a spec set that is wrong by week two is
+worse than no spec set, because it looks authoritative while being wrong.
 
-Add whatever license you'd like this repo distributed under before
-publishing — none is specified yet.
+## Upgrading a v1.0 brief to v2.1
+
+1. Re-run `ovc-discover`, or ask `ovc-specify` to upgrade the existing brief.
+   v2.x briefs start with a machine-readable header:
+
+   ```
+   ---
+   ovc-brief-version: 2
+   track: standard
+   level: intermediate
+   project: My Project
+   ---
+   ```
+
+   `ovc-specify` reads version 2 only. It will refuse a v1 brief rather than
+   guess, and it will ask you for the missing `track` and `level` values and the
+   two sections v2 added: *Success looks like* and *Assumptions & risks*.
+2. Keep `CLAUDE.md` only if you use Claude Code, with `@AGENTS.md` as its first
+   line. Delete it otherwise. v2.x creates a pointer file only for the tool you
+   name, and only if that tool needs one.
+3. Re-run `ovc-specify` to get requirement IDs (`FR-001`, `NFR-001`), the
+   traceability table, the threat-status column, and `check_specs.py`.
+4. After the build, run `ovc-explain` to get `docs/GUIDE.md`.
+
+## Repository layout at this version
+
+```
+v1.0/
+├── README.md
+├── ovc-discover.skill                 # packaged, ready to upload
+├── ovc-specify.skill                  # packaged, ready to upload
+└── (unzipped source of the above)
+    ├── ovc-discover/
+    │   ├── SKILL.md                   # discovery conversation logic
+    │   └── references/
+    │       └── ovc-templates.md       # canonical doc templates
+    └── ovc-specify/
+        ├── SKILL.md                   # spec-generation logic
+        └── references/
+            └── ovc-templates.md       # the same file, kept identical
+```
+
+The two `references/ovc-templates.md` files are intentionally identical — they
+are the single source for every document shape in the framework, duplicated into
+both skills so a brief `ovc-discover` produces always matches what
+`ovc-specify` expects. **If you edit one, copy the change into the other.** v2.0
+removed this duplication by splitting it into one shared `brief-template.md` plus
+one reference file per document.
+
+## Customising
+
+All behaviour lives in the `SKILL.md` files; all document shapes live in
+`references/ovc-templates.md`. To add a section to every future PRD, edit the PRD
+template in *both* skill folders and repackage.
+
+## Licence
+
+MIT. See [`LICENSE`](../LICENSE) in the repository root.
+
+## Honest limits
+
+- These skills are **instructions, not software**. Their quality depends on the
+  model following them. Nothing enforces any of it in v1.0.
+- The STRIDE threat model is generated for every project, including small and
+  personal ones. That is a deliberate choice — nobody benefits from a security
+  hole they never looked for — but it does mean a small project gets a larger
+  document than it needs.
+- Other tools are **untested**. v1.0 was written against Claude Code and
+  Claude.ai. Treat other agents as "should work in principle".
+- Nothing here is legal advice. Compliance questions are asked, never answered.
