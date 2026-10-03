@@ -1,0 +1,10 @@
+{
+  "name": "study-timer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "One-page 25/5 focus timer. No dependencies.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

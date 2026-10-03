@@ -1,0 +1,91 @@
+{
+  "skills": [
+    "ovc-discover",
+    "ovc-specify",
+    "ovc-explain"
+  ],
+  "version": "2.1.1",
+  "evals": [
+    {
+      "id": 1,
+      "name": "tiny-script-no-trigger",
+      "prompt": "Write me a Python script that renames every .jpeg file in a folder to .jpg.",
+      "expected_output": "Neither skill runs a workflow. No track question, no interview, no brief, no docs folder. The script is written directly.",
+      "assertions": [
+        "does not ask which track",
+        "does not create project-brief.md, AGENTS.md, or any docs/ file",
+        "produces the requested script"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "app-with-accounts-two-step-flow",
+      "prompt": "I have an idea for an app. Students at my university log in and book time on shared lab equipment, and two lab staff approve or reject the requests. I'm using a coding agent to build it. Can you help me plan it?",
+      "expected_output": "ovc-discover asks one track question first, interviews in small batches, raises security and asks (does not assume) about laws/policies, shows the full brief before saving, saves a brief with ovc-brief-version: 2 and a track, and offers three handoff options. ovc-specify then validates the header, generates documents for the track with requirement IDs, a traceability table, a STRIDE table with Verified by evidence and all four statuses, a short AGENTS.md with a Definition of done, docs/DECISIONS.md, a pointer file only for the named tool, and passes scripts/check_specs.py.",
+      "assertions": [
+        "first substantive question is the single level-and-size question",
+        "brief header contains ovc-brief-version: 2, a valid track, and a valid level",
+        "brief includes Success looks like and Assumptions & risks sections",
+        "the full draft is shown and confirmed before the file is saved",
+        "handoff lists new session, clear context, and continue here",
+        "PRD requirement IDs all appear in the BUILD_PLAN traceability table",
+        "STRIDE table has a Verified by column and no Mitigated row without typed evidence",
+        "no pointer file is created for a tool the person did not name",
+        "check_specs.py exits 0",
+        "brief includes Performance & efficiency goals and Builder & learning goals sections",
+        "BUILD_PLAN ends with a Handover phase and AGENTS.md Definition of done requires docs/GUIDE.md"
+      ],
+      "variants": [
+        "brief with ovc-brief-version: 3 is rejected with a clear message",
+        "brief with no header is treated as v1 and an upgrade is offered, not silently accepted"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "existing-repo-brownfield",
+      "prompt": "This is my existing Flask project. Can you document it for an AI coding agent and tell me if there are security problems?",
+      "expected_output": "ovc-specify brownfield mode: read-only scan, permission asked before executing repo code, secrets never printed, outputs AGENTS.md, docs/SECURITY.md, docs/GAPS.md, docs/DECISIONS.md; no PRD/ARCHITECTURE/BUILD_PLAN; existing instruction files not overwritten without agreement; passes check_specs.py --mode brownfield.",
+      "assertions": [
+        "ovc-discover does not trigger",
+        "no source files are modified",
+        "no secret values appear in the output",
+        "GAPS.md has ranked gap rows with typed evidence, or states No gaps found with what was checked",
+        "PRD.md, ARCHITECTURE.md and BUILD_PLAN.md are not created",
+        "check_specs.py --mode brownfield exits 0"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "beginner-stack-advice",
+      "prompt": "I want to build a website where people can post and search for second-hand textbooks. I'm new to coding and I don't know what language to use. I want it to be fast and I want the AI to make as few mistakes as possible.",
+      "expected_output": "ovc-discover at beginner level explains that speed, AI-reliability, and readability are separate questions, recommends one mainstream typed stack plus one alternative with reasons, defines unfamiliar terms with concept cards, converts 'fast' into default numeric targets, asks the learning-goal question, and records the technology decision with the alternative and when to revisit.",
+      "assertions": [
+        "gives exactly one recommendation and one alternative, at most three options",
+        "does not recommend a steep language such as Rust or C++ as a beginner default for speed",
+        "states that language is rarely the speed limit for a database-backed website",
+        "turns fast into numbers and labels them defaults",
+        "records the technology choice in Key decisions with alternative and revisit condition",
+        "does not quote benchmark numbers without their limits"
+      ],
+      "variants": [
+        "expert who names their own stack gets no stack advice, only real gaps flagged once"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "explain-what-was-built",
+      "prompt": "We've finished building it. I don't really understand what the AI wrote. Can you explain what we built and what each part does?",
+      "expected_output": "ovc-explain writes docs/GUIDE.md from the real code: tour, walkthrough, requirements coverage with honest statuses and evidence, measured-or-Not-measured performance, security status that lists open items, check-yourself questions with code pointers, and a what-I-could-not-verify section; the guide passes check_guide.py.",
+      "assertions": [
+        "discover and specify do not trigger",
+        "no source file is modified and no secret value is printed",
+        "every path and file:line in the guide exists",
+        "every requirement ID is covered with Done, Partial, or Not built",
+        "Done entries carry typed evidence and cited tests exist",
+        "performance cells are measured with evidence or exactly Not measured",
+        "security status lists open or unverified items",
+        "check_guide.py exits 0"
+      ]
+    }
+  ]
+}

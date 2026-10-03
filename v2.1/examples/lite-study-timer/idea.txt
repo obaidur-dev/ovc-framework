@@ -1,0 +1,6 @@
+i want to make a pomodoro thing for studying, like a web page. 25 min timer then
+a 5 min break, and it should remember how many sessions i did today. maybe a
+little beep when time is up? my friend wants it too so ill put it online
+somewhere free. no login or anything. im in first year so html css js only,
+and ill use codex to build it. oh and i want to type what im studying so it
+shows next to the timer

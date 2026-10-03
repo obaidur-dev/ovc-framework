@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Study Timer</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 22rem; margin: 3rem auto; text-align: center; }
+    #time { font-size: 4rem; font-variant-numeric: tabular-nums; margin: 0.5rem 0; }
+    button { font-size: 1rem; padding: 0.5rem 1rem; margin: 0.25rem; }
+    input { font-size: 1rem; padding: 0.4rem; width: 90%; }
+  </style>
+</head>
+<body>
+  <h1>Study Timer</h1>
+  <p id="phase">Focus</p>
+  <div id="time" aria-live="off">25:00</div>
+  <div>
+    <button id="start">Start</button>
+    <button id="pause" disabled>Pause</button>
+    <button id="mute">Mute</button>
+  </div>
+  <p>Focus blocks finished today: <strong id="count">0</strong></p>
+  <p><label for="label-input">What are you studying?</label><br>
+     <input id="label-input" maxlength="60"></p>
+  <p>Now: <strong id="label-shown"></strong></p>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
